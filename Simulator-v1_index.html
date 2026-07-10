@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=yes"
+    />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <title>WASH EUA - API Explorer</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", sans-serif;
+        background: #f5f7fa;
+        min-height: 100vh;
+        color: #2c3e50;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+
+      /* Header */
+      .header {
+        background: linear-gradient(
+          135deg,
+          #1a1a2e 0%,
+          #16213e 50%,
+          #0f3460 100%
+        );
+        color: white;
+        padding: 16px 20px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .header h1 {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .header p {
+        opacity: 0.85;
+        font-size: 0.75rem;
+      }
+
+      /* Toolbar */
+      .toolbar {
+        background: white;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e1e8ed;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        position: sticky;
+        top: 70px;
+        z-index: 99;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+
+      .toolbar-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .toolbar label {
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        min-width: 70px;
+        transition: color 0.3s;
+      }
+
+      .toolbar input,
+      .toolbar select {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border: 1px solid #d1d9e6;
+        border-radius: 10px;
+        color: #2c3e50;
+        font-family: monospace;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+      }
+
+      .toolbar input:focus,
+      .toolbar select:focus {
+        outline: none;
+        border-color: #007bff;
+        background: white;
+      }
+
+      .btn-apply {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.8rem;
+        transition: background 0.2s;
+        white-space: nowrap;
+      }
+
+      .btn-apply:active {
+        background: #0069d9;
+        transform: scale(0.98);
+      }
+
+      /* Container */
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 200px);
+      }
+
+      /* Sidebar - Versão Mobile First */
+      .sidebar {
+        background: #ffffff;
+        border-bottom: 1px solid #e1e8ed;
+        max-height: 250px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        height: 4px;
+        width: 4px;
+      }
+
+      .nav-category {
+        padding: 10px 16px 4px 16px;
+        color: #7f8c8d;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        background: #fafbfc;
+        border-top: 1px solid #ecf0f1;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+
+      .nav-category:first-child {
+        border-top: none;
+      }
+
+      .nav-items {
+        display: flex;
+        overflow-x: auto;
+        padding: 8px 12px;
+        gap: 8px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .nav-items::-webkit-scrollbar {
+        height: 3px;
+      }
+
+      .nav-item {
+        padding: 8px 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        color: #34495e;
+        background: #f8f9fa;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border: none;
+        font-family: inherit;
+      }
+
+      .nav-item:active {
+        transform: scale(0.96);
+      }
+
+      .nav-item.active {
+        background: #007bff;
+        color: white;
+      }
+
+      .nav-item .method {
+        font-weight: bold;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 12px;
+      }
+
+      .nav-item .method.get {
+        background: #28a74520;
+        color: #155724;
+      }
+      .nav-item .method.post {
+        background: #007bff20;
+        color: #004085;
+      }
+      .nav-item .method.put {
+        background: #ffc10720;
+        color: #856404;
+      }
+      .nav-item .method.delete {
+        background: #dc354520;
+        color: #721c24;
+      }
+
+      .nav-item.active .method.get,
+      .nav-item.active .method.post,
+      .nav-item.active .method.put,
+      .nav-item.active .method.delete {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        padding: 16px;
+        background: #f5f7fa;
+        transition: background 0.3s;
+      }
+
+      .endpoint-detail {
+        background: white;
+        border-radius: 16px;
+        margin-bottom: 16px;
+        border: 1px solid #e1e8ed;
+        overflow: hidden;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+
+      .endpoint-title {
+        padding: 14px 16px;
+        background: #fafbfc;
+        border-bottom: 1px solid #e1e8ed;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+
+      .method-badge {
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+      }
+
+      .method-badge.get {
+        background: #d4edda;
+        color: #155724;
+      }
+      .method-badge.post {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .method-badge.put {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .method-badge.delete {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .endpoint-path {
+        font-family: monospace;
+        font-size: 0.75rem;
+        color: #2c3e50;
+        flex: 1;
+        word-break: break-all;
+        transition: color 0.3s;
+      }
+
+      .badge {
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.6rem;
+        font-weight: 500;
+      }
+
+      .badge.public {
+        background: #d4edda;
+        color: #155724;
+      }
+      .badge.protected {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .badge.admin {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .badge.washer {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .badge.client {
+        background: #e8d5b7;
+        color: #5d4037;
+      }
+
+      .endpoint-body {
+        padding: 16px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 0.75rem;
+        transition: color 0.3s;
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        background: #f8f9fa;
+        border: 1px solid #d1d9e6;
+        border-radius: 12px;
+        color: #2c3e50;
+        font-family: monospace;
+        font-size: 0.8rem;
+        transition: all 0.2s;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        background: white;
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .param-row {
+        margin-bottom: 10px;
+      }
+
+      .param-row input {
+        width: 100%;
+      }
+
+      .btn-send {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        width: 100%;
+        transition:
+          transform 0.2s,
+          opacity 0.2s;
+      }
+
+      .btn-send:active {
+        transform: scale(0.97);
+      }
+
+      .btn-send:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .response-area {
+        margin-top: 20px;
+        border-top: 1px solid #e1e8ed;
+        padding-top: 16px;
+        transition: border-color 0.3s;
+      }
+
+      .response-status {
+        padding: 8px 12px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        font-size: 0.75rem;
+        font-weight: 500;
+      }
+
+      .response-status.success {
+        background: #d4edda;
+        border-left: 3px solid #28a745;
+        color: #155724;
+      }
+
+      .response-status.error {
+        background: #f8d7da;
+        border-left: 3px solid #dc3545;
+        color: #721c24;
+      }
+
+      .response-body {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 12px;
+        overflow-x: auto;
+        font-family: monospace;
+        font-size: 0.7rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+        transition: background 0.3s;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid white;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .no-endpoint {
+        text-align: center;
+        padding: 40px 20px;
+        color: #95a5a6;
+      }
+
+      .help-text {
+        font-size: 0.65rem;
+        color: #7f8c8d;
+        margin-top: 4px;
+      }
+
+      .description-box {
+        background: #e8f5e9;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        font-size: 0.8rem;
+        color: #1b5e20;
+      }
+
+      /* Dark Mode */
+      body.dark-mode {
+        background: #1a1a2e;
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .toolbar {
+        background: #16213e;
+        border-bottom-color: #0f3460;
+      }
+
+      body.dark-mode .toolbar label {
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .toolbar input,
+      body.dark-mode .toolbar select {
+        background: #0f0f1a;
+        border-color: #2a3a5e;
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .toolbar input:focus {
+        background: #1a1a2e;
+      }
+
+      body.dark-mode .sidebar {
+        background: #16213e;
+        border-bottom-color: #0f3460;
+      }
+
+      body.dark-mode .nav-category {
+        color: #6c7a8e;
+        background: #0f0f1a;
+        border-top-color: #0f3460;
+      }
+
+      body.dark-mode .nav-item {
+        background: #0f0f1a;
+        color: #b0c4de;
+      }
+
+      body.dark-mode .nav-item.active {
+        background: #007bff;
+        color: white;
+      }
+
+      body.dark-mode .main-content {
+        background: #1a1a2e;
+      }
+
+      body.dark-mode .endpoint-detail {
+        background: #16213e;
+        border-color: #0f3460;
+      }
+
+      body.dark-mode .endpoint-title {
+        background: #0f0f1a;
+        border-bottom-color: #0f3460;
+      }
+
+      body.dark-mode .endpoint-path {
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .form-group label {
+        color: #b0c4de;
+      }
+
+      body.dark-mode .form-group input,
+      body.dark-mode .form-group textarea,
+      body.dark-mode .form-group select {
+        background: #0f0f1a;
+        border-color: #2a3a5e;
+        color: #e0e0e0;
+      }
+
+      body.dark-mode .form-group input:focus,
+      body.dark-mode .form-group textarea:focus {
+        background: #1a1a2e;
+        border-color: #007bff;
+      }
+
+      body.dark-mode .response-body {
+        background: #0f0f1a;
+        border-color: #2a3a5e;
+      }
+
+      body.dark-mode .response-area {
+        border-top-color: #0f3460;
+      }
+
+      body.dark-mode .no-endpoint {
+        color: #6c7a8e;
+      }
+
+      body.dark-mode .description-box {
+        background: #1e2a4a !important;
+        color: #b0c4de !important;
+      }
+
+      /* Desktop improvements */
+      @media (min-width: 768px) {
+        .header {
+          padding: 20px 30px;
+        }
+        .header h1 {
+          font-size: 1.8rem;
+        }
+        .toolbar {
+          flex-direction: row;
+          flex-wrap: wrap;
+          padding: 12px 25px;
+          position: static;
+        }
+        .toolbar-row {
+          flex: 1;
+        }
+        .container {
+          flex-direction: row;
+        }
+        .sidebar {
+          width: 420px;
+          max-height: calc(100vh - 150px);
+          border-right: 1px solid #e1e8ed;
+          border-bottom: none;
+          overflow-y: auto;
+        }
+        .nav-items {
+          flex-direction: column;
+          overflow-x: visible;
+          padding: 8px 0;
+          gap: 2px;
+        }
+        .nav-item {
+          border-radius: 0;
+          border-left: 3px solid transparent;
+          background: transparent;
+          white-space: normal;
+        }
+        .nav-item.active {
+          background: #e8f4fd;
+          border-left-color: #007bff;
+          color: #004085;
+        }
+        body.dark-mode .nav-item.active {
+          background: #1e2a4a;
+        }
+        .main-content {
+          padding: 25px;
+        }
+        .btn-send {
+          width: auto;
+          padding: 12px 28px;
+        }
+      }
+
+      /* Tablet */
+      @media (min-width: 768px) and (max-width: 1024px) {
+        .sidebar {
+          width: 320px;
+        }
+        .nav-item .path {
+          font-size: 0.7rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1><span>🚗</span> WASH EUA - API Explorer</h1>
+      <p>Plataforma de Lavagem Automotiva - Estados Unidos</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <label>🔑 Token:</label>
+        <input
+          type="text"
+          id="authToken"
+          placeholder="Bearer token JWT (para rotas protegidas)"
+          style="flex: 2"
+        />
+      </div>
+      <div class="toolbar-row">
+        <label>👤 User ID:</label>
+        <input
+          type="text"
+          id="globalUserId"
+          placeholder="UUID do usuário (para body requests)"
+          style="flex: 2"
+        />
+      </div>
+      <div class="toolbar-row">
+        <label>🌐 API:</label>
+        <input
+          type="text"
+          id="baseUrlInput"
+          value="https://yeiuwngfbiwvvkjtztpn.supabase.co/functions/v1"
+        />
+        <button class="btn-apply" onclick="updateBaseUrl()">Aplicar</button>
+      </div>
+      <div class="toolbar-row">
+        <label>🎨 Tema:</label>
+        <select id="themeSelect" onchange="toggleTheme()">
+          <option value="light">☀️ Claro</option>
+          <option value="dark">🌙 Escuro</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="sidebar" id="sidebar"></div>
+      <div class="main-content" id="mainContent">
+        <div class="no-endpoint">
+          <h3>📋 Selecione um endpoint</h3>
+          <p>Clique em qualquer rota para testar a API do WASH EUA</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Dark mode
+      function toggleTheme() {
+        const theme = document.getElementById("themeSelect").value;
+        if (theme === "dark") {
+          document.body.classList.add("dark-mode");
+        } else {
+          document.body.classList.remove("dark-mode");
+        }
+        localStorage.setItem("wash-theme", theme);
+      }
+
+      // ============================================
+      // API ENDPOINTS DEFINITION - WASH EUA
+      // ============================================
+      const endpoints = {
+        auth: {
+          name: "🔐 Autenticação",
+          endpoints: [
+            {
+              method: "POST",
+              path: "/auth/register",
+              auth: false,
+              body: {
+                email: "cliente@email.com",
+                password: "SecurePass123!",
+                firstName: "João",
+                lastName: "Silva",
+                phone: "+12345678901",
+                zipCode: "90210",
+              },
+              description: "Registrar novo usuário",
+            },
+            {
+              method: "POST",
+              path: "/auth/login",
+              auth: false,
+              body: {
+                email: "cliente@email.com",
+                password: "SecurePass123!",
+              },
+              description: "Login e geração de token JWT",
+            },
+            {
+              method: "GET",
+              path: "/auth/verify",
+              auth: true,
+              description: "Verificar token JWT",
+            },
+            {
+              method: "POST",
+              path: "/auth/refresh",
+              auth: false,
+              body: {
+                refresh_token: "",
+              },
+              description: "Renovar token via refresh_token",
+            },
+            {
+              method: "POST",
+              path: "/auth/logout",
+              auth: true,
+              description: "Encerrar sessão ativa",
+            },
+          ],
+        },
+        client: {
+          name: "👤 Cliente",
+          endpoints: [
+            {
+              method: "POST",
+              path: "/client-create-order/create",
+              auth: true,
+              body: {
+                serviceType: "full-detail",
+                servicePackage: "premium",
+                vehicleId: "TESLA-2023-MODEL3-001",
+                address: {
+                  street: "456 Oak Avenue",
+                  city: "Austin",
+                  state: "TX",
+                  zipCode: "78701",
+                },
+                scheduledDate: "2026-07-10T14:00:00-06:00",
+                categorySlug: "suv",
+                clientNotes: "Please be careful, this is a Tesla!",
+              },
+              description: "Criar pedido com categoria selecionada",
+            },
+            {
+              method: "GET",
+              path: "/client-get-orders",
+              auth: true,
+              query: {
+                status: "",
+                limit: "20",
+                offset: "0",
+              },
+              description: "Listar todos os pedidos do cliente",
+            },
+            {
+              method: "GET",
+              path: "/client-get-order",
+              auth: true,
+              params: ["orderId"],
+              query: {},
+              description: "Buscar pedido específico pelo ID",
+            },
+            {
+              method: "POST",
+              path: "/client-cancel-order",
+              auth: true,
+              body: {
+                orderId: "",
+                reason: "Changed my mind",
+              },
+              description: "Cancelar pedido",
+            },
+            {
+              method: "POST",
+              path: "/client-review",
+              auth: true,
+              body: {
+                orderId: "",
+                rating: 5,
+                review: "Excellent service!",
+                recommend: true,
+              },
+              description: "Avaliar serviço",
+            },
+          ],
+        },
+        washer: {
+          name: "🧑‍🔧 Washer (Lavador)",
+          endpoints: [
+            {
+              method: "POST",
+              path: "/washer-onboard",
+              auth: true,
+              body: {
+                ssn: "123-45-6789",
+                driverLicense: "TX12345678",
+                driverLicenseExpiry: "2028-12-31",
+                state: "TX",
+                vehicle: {
+                  make: "Ford",
+                  model: "F-150",
+                  year: 2022,
+                  color: "White",
+                  licensePlate: "TX-1234",
+                },
+                insurance: {
+                  provider: "State Farm",
+                  policyNumber: "SF-123456",
+                  coverage_amount: 500000,
+                  expiryDate: "2027-01-01",
+                },
+                backgroundCheckConsent: true,
+              },
+              description: "Registrar como lavador",
+            },
+            {
+              method: "GET",
+              path: "/washer-orders",
+              auth: true,
+              query: {
+                status: "",
+                limit: "20",
+                offset: "0",
+              },
+              description: "Listar pedidos do lavador",
+            },
+            {
+              method: "GET",
+              path: "/washer-get-order",
+              auth: true,
+              params: ["orderId"],
+              description: "Buscar pedido específico (atribuído ao lavador)",
+            },
+            {
+              method: "PUT",
+              path: "/washer-accept-order",
+              auth: true,
+              body: {
+                orderId: "",
+                accept: true,
+              },
+              description: "Aceitar ou rejeitar pedido",
+            },
+            {
+              method: "PUT",
+              path: "/washer-start-service",
+              auth: true,
+              body: {
+                orderId: "",
+                photos: [
+                  {
+                    type: "exterior-front",
+                    url: "https://wash.com/photos/front.jpg",
+                  },
+                  {
+                    type: "exterior-back",
+                    url: "https://wash.com/photos/back.jpg",
+                  },
+                  {
+                    type: "exterior-left",
+                    url: "https://wash.com/photos/left.jpg",
+                  },
+                  {
+                    type: "exterior-right",
+                    url: "https://wash.com/photos/right.jpg",
+                  },
+                  {
+                    type: "interior-front",
+                    url: "https://wash.com/photos/interior-front.jpg",
+                  },
+                  {
+                    type: "interior-back",
+                    url: "https://wash.com/photos/interior-back.jpg",
+                  },
+                  {
+                    type: "interior-left",
+                    url: "https://wash.com/photos/interior-left.jpg",
+                  },
+                  {
+                    type: "interior-right",
+                    url: "https://wash.com/photos/interior-right.jpg",
+                  },
+                ],
+              },
+              description: "Iniciar serviço (com 8 fotos)",
+            },
+            {
+              method: "PUT",
+              path: "/washer-complete-service",
+              auth: true,
+              body: {
+                orderId: "",
+                signature: "data:image/png;base64,iVBORw0KGgoAAAANS...",
+                postPhotos: [
+                  {
+                    type: "exterior-front",
+                    url: "https://wash.com/photos/after-front.jpg",
+                  },
+                  {
+                    type: "exterior-back",
+                    url: "https://wash.com/photos/after-back.jpg",
+                  },
+                  {
+                    type: "exterior-left",
+                    url: "https://wash.com/photos/after-left.jpg",
+                  },
+                  {
+                    type: "exterior-right",
+                    url: "https://wash.com/photos/after-right.jpg",
+                  },
+                ],
+              },
+              description: "Completar serviço (com assinatura)",
+            },
+          ],
+        },
+        vehicle: {
+          name: "🚗 Veículos",
+          endpoints: [
+            {
+              method: "GET",
+              path: "/vehicle-categories/list",
+              auth: false,
+              description: "Listar todas as categorias de veículos",
+            },
+            {
+              method: "GET",
+              path: "/vehicle-categories/get",
+              auth: false,
+              params: ["slug"],
+              query: {},
+              description: "Buscar categoria por slug (ex: ?slug=suv)",
+            },
+          ],
+        },
+        admin: {
+          name: "🛡️ Administração",
+          endpoints: [
+            {
+              method: "GET",
+              path: "/admin-config/config",
+              auth: true,
+              description: "Obter configurações do sistema",
+            },
+            {
+              method: "PUT",
+              path: "/admin-config/config",
+              auth: true,
+              body: { key: "selection_criteria", value: {} },
+              description: "Atualizar configuração",
+            },
+            {
+              method: "GET",
+              path: "/admin-config/selection",
+              auth: true,
+              description: "Obter critérios de seleção de washers",
+            },
+            {
+              method: "GET",
+              path: "/admin-config/washers",
+              auth: true,
+              query: { state: "", status: "" },
+              description: "Listar washers com métricas",
+            },
+            {
+              method: "PUT",
+              path: "/admin-config/washer/:id/priority",
+              auth: true,
+              params: ["id"],
+              body: { priorityLevel: "gold" },
+              description: "Atualizar prioridade do washer",
+            },
+            {
+              method: "PUT",
+              path: "/admin-config/washer/:id/block",
+              auth: true,
+              params: ["id"],
+              body: { blocked: true, reason: "Muitas reclamações" },
+              description: "Bloquear/desbloquear washer",
+            },
+          ],
+        },
+        test: {
+          name: "🧪 Teste",
+          endpoints: [
+            {
+              method: "GET",
+              path: "/hello/hello",
+              auth: false,
+              description: "Endpoint público de teste",
+            },
+            {
+              method: "GET",
+              path: "/hello/decode",
+              auth: true,
+              description: "Decodificar token JWT",
+            },
+            {
+              method: "GET",
+              path: "/hello/test",
+              auth: true,
+              description: "Teste de autenticação",
+            },
+          ],
+        },
+      };
+
+      let currentEndpoint = null;
+      let currentCategoryKey = null;
+      let currentIdx = null;
+
+      function buildNavigation() {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.innerHTML = "";
+
+        for (const [categoryKey, category] of Object.entries(endpoints)) {
+          const categoryDiv = document.createElement("div");
+          categoryDiv.className = "nav-category";
+          categoryDiv.textContent = category.name;
+          sidebar.appendChild(categoryDiv);
+
+          const itemsContainer = document.createElement("div");
+          itemsContainer.className = "nav-items";
+
+          category.endpoints.forEach((endpoint, idx) => {
+            const navItem = document.createElement("button");
+            navItem.className = "nav-item";
+            navItem.innerHTML = `
+                        <span class="method ${endpoint.method.toLowerCase()}">${endpoint.method}</span>
+                        <span class="path">${endpoint.path.length > 30 ? endpoint.path.substring(0, 27) + "..." : endpoint.path}</span>
+                    `;
+            navItem.onclick = () => loadEndpoint(categoryKey, idx);
+            itemsContainer.appendChild(navItem);
+          });
+          sidebar.appendChild(itemsContainer);
+        }
+      }
+
+      function getAuthBadge(endpoint) {
+        if (endpoint.role === "admin")
+          return '<span class="badge admin">ADMIN</span>';
+        if (endpoint.role === "professional")
+          return '<span class="badge washer">WASHER</span>';
+        if (endpoint.auth)
+          return '<span class="badge protected">🔒 PROTEGIDA</span>';
+        return '<span class="badge public">🌐 PÚBLICA</span>';
+      }
+
+      function buildUrl(baseUrl, path, params = {}, query = {}) {
+        let url = baseUrl + path;
+        for (const [key, value] of Object.entries(params)) {
+          url = url.replace(`:${key}`, encodeURIComponent(value));
+        }
+        const queryParams = new URLSearchParams();
+        for (const [key, value] of Object.entries(query)) {
+          if (value && value !== "") queryParams.append(key, value);
+        }
+        const qs = queryParams.toString();
+        if (qs) url += "?" + qs;
+        return url;
+      }
+
+      function loadEndpoint(categoryKey, idx) {
+        const endpoint = endpoints[categoryKey].endpoints[idx];
+        currentEndpoint = endpoint;
+        currentCategoryKey = categoryKey;
+        currentIdx = idx;
+
+        // Update active state
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((item) => item.classList.remove("active"));
+
+        let counter = 0;
+        for (const [catKey, category] of Object.entries(endpoints)) {
+          const itemsContainers = document.querySelectorAll(`.nav-items`);
+          if (itemsContainers[counter]) {
+            const navItems =
+              itemsContainers[counter].querySelectorAll(".nav-item");
+            if (navItems[idx] && catKey === categoryKey) {
+              navItems[idx].classList.add("active");
+            }
+          }
+          counter++;
+        }
+
+        const mainContent = document.getElementById("mainContent");
+        const methodClass = endpoint.method.toLowerCase();
+        const authBadge = getAuthBadge(endpoint);
+
+        // Description
+        let descriptionHtml = "";
+        if (endpoint.description) {
+          descriptionHtml = `<div class="description-box">📌 ${endpoint.description}</div>`;
+        }
+
+        // Path parameters
+        let paramsHtml = "";
+        if (endpoint.params && endpoint.params.length > 0) {
+          paramsHtml =
+            '<div class="form-group"><label>📌 Path Parameters</label>';
+          for (const param of endpoint.params) {
+            const exampleValue =
+              param === "id"
+                ? "123"
+                : param === "orderId"
+                  ? "ord_123456"
+                  : `exemplo_${param}`;
+            paramsHtml += `<div class="param-row"><input type="text" id="param_${param}" placeholder=":${param}" value="${exampleValue}"></div>`;
+          }
+          paramsHtml +=
+            '<div class="help-text">⚠️ Substitua pelos valores reais</div></div>';
+        }
+
+        // Query parameters
+        let queryHtml = "";
+        if (endpoint.query && Object.keys(endpoint.query).length > 0) {
+          queryHtml =
+            '<div class="form-group"><label>🔍 Query Parameters</label>';
+          for (const [key, value] of Object.entries(endpoint.query)) {
+            queryHtml += `<div class="param-row"><input type="text" id="query_${key}" placeholder="${key}" value="${value}"></div>`;
+          }
+          queryHtml += "</div>";
+        }
+
+        // Body
+        let bodyHtml = "";
+        if (endpoint.body) {
+          const bodyObject = { ...endpoint.body };
+          // Preencher placeholders com valores globais
+          const userId = document.getElementById("globalUserId").value;
+          if (userId && bodyObject.clientId) bodyObject.clientId = userId;
+          if (userId && bodyObject.professionalId)
+            bodyObject.professionalId = userId;
+          if (userId && bodyObject.userId) bodyObject.userId = userId;
+
+          bodyHtml = `
+                    <div class="form-group">
+                        <label>📦 Request Body (JSON)</label>
+                        <textarea id="requestBody">${JSON.stringify(bodyObject, null, 2)}</textarea>
+                    </div>
+                `;
+        }
+
+        const html = `
+                <div class="endpoint-detail">
+                    <div class="endpoint-title">
+                        <span class="method-badge ${methodClass}">${endpoint.method}</span>
+                        <span class="endpoint-path">${endpoint.path}</span>
+                        ${authBadge}
+                    </div>
+                    <div class="endpoint-body">
+                        ${descriptionHtml}
+                        ${paramsHtml}
+                        ${queryHtml}
+                        ${bodyHtml}
+                        <button class="btn-send" onclick="sendRequest()">🚀 Enviar Requisição</button>
+                        <div id="responseArea" style="display: none;" class="response-area">
+                            <div id="responseStatus" class="response-status"></div>
+                            <div id="responseBody" class="response-body"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        mainContent.innerHTML = html;
+      }
+
+      async function sendRequest() {
+        if (!currentEndpoint) return;
+
+        const endpoint = currentEndpoint;
+        const baseUrl = document.getElementById("baseUrlInput").value;
+        const authToken = document.getElementById("authToken").value;
+
+        // Path params
+        const pathParams = {};
+        if (endpoint.params) {
+          for (const param of endpoint.params) {
+            const input = document.getElementById(`param_${param}`);
+            if (input && input.value) pathParams[param] = input.value;
+          }
+        }
+
+        // Query params
+        const queryParams = {};
+        if (endpoint.query) {
+          for (const key of Object.keys(endpoint.query)) {
+            const input = document.getElementById(`query_${key}`);
+            if (input && input.value) queryParams[key] = input.value;
+          }
+        }
+
+        // Body
+        let body = null;
+        if (endpoint.body) {
+          const bodyTextarea = document.getElementById("requestBody");
+          if (bodyTextarea && bodyTextarea.value) {
+            try {
+              body = JSON.parse(bodyTextarea.value);
+            } catch (e) {
+              body = { raw: bodyTextarea.value };
+            }
+          }
+        }
+
+        const url = buildUrl(baseUrl, endpoint.path, pathParams, queryParams);
+
+        const headers = { "Content-Type": "application/json" };
+        if (endpoint.auth && authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
+        const options = { method: endpoint.method, headers };
+        if (
+          body &&
+          (endpoint.method === "POST" ||
+            endpoint.method === "PUT" ||
+            endpoint.method === "PATCH" ||
+            endpoint.method === "DELETE")
+        ) {
+          options.body = JSON.stringify(body);
+        }
+
+        const sendBtn = document.querySelector(".btn-send");
+        const originalText = sendBtn.innerHTML;
+        sendBtn.innerHTML = '⏳ Enviando... <span class="loading"></span>';
+        sendBtn.disabled = true;
+
+        const responseArea = document.getElementById("responseArea");
+        const responseStatus = document.getElementById("responseStatus");
+        const responseBody = document.getElementById("responseBody");
+
+        responseArea.style.display = "block";
+        responseStatus.innerHTML = "🔄 Aguardando resposta...";
+        responseStatus.className = "response-status";
+        responseBody.innerHTML = "";
+
+        try {
+          const startTime = Date.now();
+          const response = await fetch(url, options);
+          const duration = Date.now() - startTime;
+          const contentType = response.headers.get("content-type");
+          let data;
+          if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+          } else {
+            const text = await response.text();
+            try {
+              data = JSON.parse(text);
+            } catch {
+              data = { message: text || "Resposta vazia" };
+            }
+          }
+
+          if (response.ok) {
+            responseStatus.innerHTML = `✅ ${response.status} ${response.statusText} - ${duration}ms`;
+            responseStatus.className = "response-status success";
+          } else {
+            responseStatus.innerHTML = `❌ ${response.status} ${response.statusText} - ${duration}ms`;
+            responseStatus.className = "response-status error";
+          }
+          responseBody.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (error) {
+          responseStatus.innerHTML = `❌ Erro: ${error.message}`;
+          responseStatus.className = "response-status error";
+          responseBody.innerHTML = `<pre>Verifique o servidor em ${baseUrl}\n\nDetalhes: ${error.message}</pre>`;
+        } finally {
+          sendBtn.innerHTML = originalText;
+          sendBtn.disabled = false;
+        }
+      }
+
+      function updateBaseUrl() {
+        if (currentEndpoint) {
+          loadEndpoint(currentCategoryKey, currentIdx);
+        }
+      }
+
+      // Inicialização
+      buildNavigation();
+
+      // Carregar primeira rota
+      const firstCategory = Object.keys(endpoints)[0];
+      if (firstCategory && endpoints[firstCategory].endpoints.length) {
+        loadEndpoint(firstCategory, 0);
+      }
+
+      // Restaurar tema
+      const savedTheme = localStorage.getItem("wash-theme");
+      if (savedTheme) {
+        document.getElementById("themeSelect").value = savedTheme;
+        if (savedTheme === "dark") {
+          document.body.classList.add("dark-mode");
+        }
+      }
+
+      // Restaurar token e user id
+      const savedToken = localStorage.getItem("wash-token");
+      if (savedToken) {
+        document.getElementById("authToken").value = savedToken;
+      }
+
+      const savedUserId = localStorage.getItem("wash-userId");
+      if (savedUserId) {
+        document.getElementById("globalUserId").value = savedUserId;
+      }
+
+      // Auto-save
+      document
+        .getElementById("authToken")
+        .addEventListener("change", function () {
+          localStorage.setItem("wash-token", this.value);
+        });
+
+      document
+        .getElementById("globalUserId")
+        .addEventListener("change", function () {
+          localStorage.setItem("wash-userId", this.value);
+        });
+
+      document
+        .getElementById("themeSelect")
+        .addEventListener("change", function () {
+          localStorage.setItem("wash-theme", this.value);
+        });
+    </script>
+  </body>
+</html>

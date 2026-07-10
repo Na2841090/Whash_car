@@ -1,0 +1,43 @@
+{
+  "name": "whash_car",
+  "version": "1.0.0",
+  "description": "api_Whash_car",
+  "main": "index.js",
+  "scripts": {
+    "dev": "supabase start",
+    "stop": "supabase stop",
+    "reset": "supabase db reset",
+    "migrate": "supabase migration new",
+    "functions:serve": "supabase functions serve --no-verify-jwt",
+    "types": "supabase gen types typescript --local > src/types/database.ts",
+    "seed": "npx tsx supabase/seed.sql",
+    "test:flow": "npx tsx src/scripts/test-full-flow.ts",
+    "test:connection": "npx tsx src/scripts/test-connection.ts",
+    "add:vehicle": "npx tsx src/scripts/add-vehicle.ts",
+    "add:washer": "npx tsx src/scripts/add-washer.ts",
+    "create:admin": "npx tsx src/scripts/create-admin.ts",
+    "clean": "rm -rf supabase/.temp supabase/branches"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Na2841090/Whash_car.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Na2841090/Whash_car/issues"
+  },
+  "homepage": "https://github.com/Na2841090/Whash_car#readme",
+  "dependencies": {
+    "@supabase/functions-js": "^2.107.0",
+    "@supabase/supabase-js": "^2.107.0",
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.2",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Admin Dashboard - WashCar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">🚗 WashCar - Admin Dashboard</h1>
+        
+        <!-- Login Form -->
+        <div id="loginForm" class="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
+            <h2 class="text-xl font-semibold mb-4">Admin Login</h2>
+            <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-3">
+            <input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-3">
+            <button onclick="login()" class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                Entrar
+            </button>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" style="display:none;">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-500 text-sm">Total Pedidos</h3>
+                    <p id="totalOrders" class="text-3xl font-bold">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-500 text-sm">Receita Total</h3>
+                    <p id="totalRevenue" class="text-3xl font-bold">$0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-gray-500 text-sm">Lavadores Ativos</h3>
+                    <p id="activeWashers" class="text-3xl font-bold">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4">📋 Pedidos Recentes</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left p-2">ID</th>
+                                <th class="text-left p-2">Cliente</th>
+                                <th class="text-left p-2">Status</th>
+                                <th class="text-left p-2">Total</th>
+                                <th class="text-left p-2">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'http://127.0.0.1:54321';
+        const SUPABASE_ANON_KEY = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
+        const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email, password
+            });
+
+            if (error) {
+                alert('Erro: ' + error.message);
+                return;
+            }
+
+            // Verificar se é admin
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .single();
+
+            if (profile?.role !== 'admin') {
+                alert('Acesso negado. Apenas administradores.');
+                await supabase.auth.signOut();
+                return;
+            }
+
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            loadDashboard();
+        }
+
+        async function loadDashboard() {
+            // Carregar estatísticas
+            const { count: ordersCount } = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true });
+
+            const { data: orders } = await supabase
+                .from('orders')
+                .select('*, client:profiles(full_name)')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            const { data: revenue } = await supabase
+                .from('orders')
+                .select('total_price')
+                .eq('payment_status', 'paid');
+
+            const totalRevenue = revenue?.reduce((sum, o) => sum + o.total_price, 0) || 0;
+
+            const { count: washersCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('role', 'washer');
+
+            document.getElementById('totalOrders').textContent = ordersCount || 0;
+            document.getElementById('totalRevenue').textContent = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('activeWashers').textContent = washersCount || 0;
+
+            // Popular tabela
+            const tbody = document.getElementById('ordersList');
+            tbody.innerHTML = '';
+            orders?.forEach(order => {
+                const row = tbody.insertRow();
+                row.className = 'border-b';
+                row.innerHTML = `
+                    <td class="p-2 text-sm">${order.id.slice(0,8)}...</td>
+                    <td class="p-2">${order.client?.full_name || 'N/A'}</td>
+                    <td class="p-2">
+                        <span class="px-2 py-1 rounded text-xs ${getStatusColor(order.status)}">
+                            ${order.status}
+                        </span>
+                    </td>
+                    <td class="p-2">$${order.total_price}</td>
+                    <td class="p-2">
+                        <button onclick="viewOrder('${order.id}')" class="text-blue-500 hover:underline">
+                            Ver
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                pending: 'bg-yellow-200 text-yellow-800',
+                accepted: 'bg-blue-200 text-blue-800',
+                in_progress: 'bg-purple-200 text-purple-800',
+                completed: 'bg-green-200 text-green-800',
+                cancelled: 'bg-red-200 text-red-800'
+            };
+            return colors[status] || 'bg-gray-200 text-gray-800';
+        }
+
+        async function viewOrder(orderId) {
+            alert(`Visualizar pedido: ${orderId}\n(Implementar modal de detalhes)`);
+        }
+
+        // Verificar se já está logado
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                loadDashboard();
+            }
+        });
+    </script>
+</body>
+</html>
